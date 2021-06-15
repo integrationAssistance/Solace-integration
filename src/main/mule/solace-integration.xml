@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="5b691d51-8103-4a2f-ab37-c14bdccb3b2c" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="03b4577f-bc80-4043-9020-7118e9992f38" >
+		<http:request-connection host="mrdsh1ekme0f2.messaging.solace.cloud" port="9000" >
+			<http:authentication >
+				<http:basic-authentication username="solace-cloud-client" password="dh3fk10jp6r0gl021q9h8sjls4" />
+			</http:authentication>
+		</http:request-connection>
+	</http:request-config>
+	<jms:config name="JMS_Config" doc:name="JMS Config" doc:id="79e7a071-3603-41c2-bff7-4f2aebfdb8b9" >
+		<jms:generic-connection username="solace-cloud-client" password="dh3fk10jp6r0gl021q9h8sjls4" >
+			<jms:connection-factory >
+				<jms:jndi-connection-factory connectionFactoryJndiName="/jms/cf/default" >
+					<jms:name-resolver-builder jndiInitialContextFactory="com.solacesystems.jndi.SolJNDIInitialContextFactory" jndiProviderUrl="smf://solace-cloud-client:dh3fk10jp6r0gl021q9h8sjls4@mrdsh1ekme0f2.messaging.solace.cloud:55555" >
+						<jms:provider-properties >
+							<jms:provider-property key="java.naming.security.principal" value="solace-cloud-client@topic-service" />
+						</jms:provider-properties>
+					</jms:name-resolver-builder>
+				</jms:jndi-connection-factory>
+			</jms:connection-factory>
+		</jms:generic-connection>
+	</jms:config>
+	<flow name="solace-integrationFlow" doc:id="95132707-90ea-4028-b11c-cd65d70020a7" >
+		<http:listener doc:name="Listener" doc:id="187eb1ee-5fc7-42d7-885e-bb3fb506a6e3" config-ref="HTTP_Listener_config" path="/solace"/>
+		<logger level="INFO" doc:name="Logger" doc:id="0b746dee-0d4c-4caa-be68-2e68d7ed6792" message='#["Solace Initiated"]'/>
+		<http:request method="POST" doc:name="Request" doc:id="524f8ab7-52c4-4558-995d-79b04fb46216" config-ref="HTTP_Request_configuration" path="/testTopic"/>
+		<logger level="INFO" doc:name="Logger" doc:id="e30012e6-2286-425b-9fca-165a1b0d19b9" message='#["Solace Finished"]'/>
+	</flow>
+	<flow name="solace-test-integrationFlow1" doc:id="02859eca-eaf0-43d8-bb1f-eebdfec715a2" >
+		<jms:listener doc:name="On New Message" doc:id="f15d14ea-51e3-409b-ab8b-78016bfb2e16" destination="testTopic" numberOfConsumers="1" config-ref="JMS_Config">
+			<jms:consumer-type >
+				<jms:topic-consumer />
+			</jms:consumer-type>
+		</jms:listener>
+		<logger level="INFO" doc:name="Logger" doc:id="8d5e0ecb-ceb2-45ca-8015-9df373f06047" message='#["final payload" : payload]'/>
+	</flow>
+</mule>
